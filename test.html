@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>温控系统 - 接口测试页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #667eea;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 120px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .result-box.success {
+            border-color: #38ef7d;
+            background: #f0fff4;
+        }
+
+        .result-box.error {
+            border-color: #f5576c;
+            background: #fff5f5;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+
+        .status.loading {
+            background: #ffd700;
+            color: #333;
+        }
+
+        .status.success {
+            background: #38ef7d;
+            color: white;
+        }
+
+        .status.error {
+            background: #f5576c;
+            color: white;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .token-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .token-section h3 {
+            color: #856404;
+            margin-bottom: 12px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .example-btn {
+            background: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .example-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/md5@2.3.0/md5.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>温控系统 - 接口测试页面</h1>
+
+        <!-- Token 配置 -->
+        <div class="token-section">
+            <h3>认证配置</h3>
+            <div class="form-group">
+                <label>Token（下发接口需要）</label>
+                <input type="text" id="token" placeholder="请输入登录后的 Token">
+                <div class="help-text">调用下发接口时需要在 Header 中携带 Authorization: Bearer {token}</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- 获取全部实时值 -->
+            <div class="card">
+                <h2>获取全部实时值</h2>
+                <p style="color: #666; margin-bottom: 16px;">GET /api/realtime/all</p>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="getAllRealtime()">发送请求</button>
+                    <span id="getAllStatus"></span>
+                </div>
+                <div class="result-box" id="getAllResult">等待请求...</div>
+            </div>
+
+            <!-- 批量获取实时值 -->
+            <div class="card">
+                <h2>批量获取实时值</h2>
+                <p style="color: #666; margin-bottom: 16px;">POST /api/realtime/batch</p>
+                <div class="form-group">
+                    <label>变量标识符列表（JSON 数组）</label>
+                    <textarea id="batchKeys" placeholder='["TEMP_001", "TEMP_002", "HUM_001"]'></textarea>
+                    <div class="help-text">最多支持 100 个变量标识符</div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="batchGetRealtime()">发送请求</button>
+                    <button class="example-btn" onclick="fillBatchExample()">填入示例</button>
+                    <span id="batchGetStatus"></span>
+                </div>
+                <div class="result-box" id="batchGetResult">等待请求...</div>
+            </div>
+
+            <!-- 参数下发 -->
+            <div class="card">
+                <h2>参数下发</h2>
+                <p style="color: #666; margin-bottom: 16px;">POST /api/param/save（需要认证）</p>
+                <div class="form-group">
+                    <label>参数（JSON 对象）</label>
+                    <textarea id="saveParams" placeholder='{"params": {"TEMP_001": 25, "TEMP_002": 30}}'></textarea>
+                    <div class="help-text">键为变量标识符，值为要下发的数值</div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="saveParams()">发送请求</button>
+                    <button class="example-btn" onclick="fillSaveExample()">填入示例</button>
+                    <span id="saveParamsStatus"></span>
+                </div>
+                <div class="result-box" id="saveParamsResult">等待请求...</div>
+            </div>
+
+            <!-- 查询未完成业务操作 -->
+            <div class="card">
+                <h2>查询未完成业务操作（轮询接口）</h2>
+                <p style="color: #666; margin-bottom: 16px;">GET /api/business-log/pending</p>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="getPendingBusinessLogs()">发送请求</button>
+                    <span id="pendingStatus"></span>
+                </div>
+                <div class="result-box" id="pendingResult">等待请求...</div>
+            </div>
+
+            <!-- 分页查询点位日志列表 -->
+            <div class="card">
+                <h2>分页查询点位日志列表</h2>
+                <p style="color: #666; margin-bottom: 16px;">GET /api/business-log/point-log/list</p>
+                <div class="form-group">
+                    <label>业务操作标识（必填）</label>
+                    <input type="text" id="pointLogBusinessId" placeholder="请输入业务操作标识（如 B123456ABCD）">
+                    <div class="help-text">从轮询接口或列表接口返回的 businessId 字段获取</div>
+                </div>
+                <div class="form-group">
+                    <label>页码</label>
+                    <input type="number" id="pointLogPageNum" value="1" min="1" placeholder="页码">
+                </div>
+                <div class="form-group">
+                    <label>每页条数</label>
+                    <input type="number" id="pointLogPageSize" value="10" min="1" max="100" placeholder="每页条数">
+                </div>
+                <div class="form-group">
+                    <label>点位状态（可选）</label>
+                    <select id="pointLogStatusFilter">
+                        <option value="">全部</option>
+                        <option value="0">待执行</option>
+                        <option value="1">执行中</option>
+                        <option value="2">成功</option>
+                        <option value="3">失败</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="getPointLogList()">发送请求</button>
+                    <span id="pointLogListStatus"></span>
+                </div>
+                <div class="result-box" id="pointLogListResult">等待请求...</div>
+            </div>
+
+            <!-- 分页查询业务日志列表 -->
+            <div class="card">
+                <h2>分页查询业务日志列表</h2>
+                <p style="color: #666; margin-bottom: 16px;">GET /api/business-log/list</p>
+                <div class="form-group">
+                    <label>页码</label>
+                    <input type="number" id="pageNum" value="1" min="1" placeholder="页码">
+                </div>
+                <div class="form-group">
+                    <label>每页条数</label>
+                    <input type="number" id="pageSize" value="10" min="1" max="100" placeholder="每页条数">
+                </div>
+                <div class="form-group">
+                    <label>完成状态（可选）</label>
+                    <select id="completedFilter">
+                        <option value="">全部</option>
+                        <option value="0">未完成</option>
+                        <option value="1">已完成</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>整体状态（可选）</label>
+                    <select id="overallStatusFilter">
+                        <option value="">全部</option>
+                        <option value="1">全部成功</option>
+                        <option value="2">全部失败</option>
+                        <option value="3">部分成功</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="getBusinessLogList()">发送请求</button>
+                    <span id="listStatus"></span>
+                </div>
+                <div class="result-box" id="listResult">等待请求...</div>
+            </div>
+
+            <!-- 品种切换 -->
+            <div class="card">
+                <h2>品种切换</h2>
+                <p style="color: #666; margin-bottom: 16px;">POST /api/active-config/switch（需要认证）</p>
+                <div class="form-group">
+                    <label>品种代码（必填）</label>
+                    <input type="text" id="switchBreedCode" placeholder="请输入品种代码">
+                </div>
+                <div class="form-group">
+                    <label>均重配置ID（可选）</label>
+                    <input type="number" id="switchBreedWeightConfigId" placeholder="请输入均重配置ID">
+                </div>
+                <div class="form-group">
+                    <label>是否自动下发（必填）</label>
+                    <select id="switchAutoUpdate">
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                    <div class="help-text">选择"是"时，切换品种后会自动下发该品种的均重配置到设备</div>
+                </div>
+                <div class="form-group">
+                    <label>生产订单号（可选）</label>
+                    <input type="text" id="switchProductionOrderNo" placeholder="请输入生产订单号">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="switchBreed()">发送请求</button>
+                    <button class="example-btn" onclick="fillSwitchExample()">填入示例</button>
+                    <span id="switchBreedStatus"></span>
+                </div>
+                <div class="result-box" id="switchBreedResult">等待请求...</div>
+            </div>
+
+            <!-- 获取当前生效配置 -->
+            <div class="card">
+                <h2>获取当前生效配置</h2>
+                <p style="color: #666; margin-bottom: 16px;">GET /api/active-config/current（需要认证）</p>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="getCurrentActiveConfig()">发送请求</button>
+                    <span id="currentConfigStatus"></span>
+                </div>
+                <div class="result-box" id="currentConfigResult">等待请求...</div>
+            </div>
+
+            <!-- 登录测试 -->
+            <div class="card">
+                <h2>登录测试</h2>
+                <p style="color: #666; margin-bottom: 16px;">POST /api/auth/login</p>
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="username" placeholder="请输入用户名" value="admin">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="password" placeholder="请输入密码" value="admin123">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-warning" onclick="login()">登录</button>
+                    <span id="loginStatus"></span>
+                </div>
+                <div class="result-box" id="loginResult">等待请求...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 工具函数：显示状态
+        function showStatus(elementId, type, text) {
+            const el = document.getElementById(elementId);
+            el.className = 'status ' + type;
+            el.textContent = text;
+        }
+
+        // 工具函数：显示结果
+        function showResult(elementId, data, isError = false) {
+            const el = document.getElementById(elementId);
+            el.className = 'result-box ' + (isError ? 'error' : 'success');
+            el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }
+
+        // 工具函数：发送请求
+        async function request(url, options = {}) {
+            const defaultHeaders = {
+                'Content-Type': 'application/json'
+            };
+
+            const token = document.getElementById('token').value;
+            if (token) {
+                defaultHeaders['Authorization'] = 'Bearer ' + token;
+            }
+
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    ...defaultHeaders,
+                    ...options.headers
+                }
+            });
+
+            return await response.json();
+        }
+
+        // 获取全部实时值
+        async function getAllRealtime() {
+            showStatus('getAllStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/realtime/all');
+                showResult('getAllResult', result);
+                showStatus('getAllStatus', 'success', '成功');
+            } catch (error) {
+                showResult('getAllResult', error.message, true);
+                showStatus('getAllStatus', 'error', '失败');
+            }
+        }
+
+        // 批量获取实时值
+        async function batchGetRealtime() {
+            const keysText = document.getElementById('batchKeys').value;
+            if (!keysText.trim()) {
+                showResult('batchGetResult', '请输入变量标识符列表', true);
+                return;
+            }
+
+            let keys;
+            try {
+                keys = JSON.parse(keysText);
+            } catch (e) {
+                showResult('batchGetResult', 'JSON 格式错误: ' + e.message, true);
+                return;
+            }
+
+            showStatus('batchGetStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/realtime/batch', {
+                    method: 'POST',
+                    body: JSON.stringify(keys)
+                });
+                showResult('batchGetResult', result);
+                showStatus('batchGetStatus', 'success', '成功');
+            } catch (error) {
+                showResult('batchGetResult', error.message, true);
+                showStatus('batchGetStatus', 'error', '失败');
+            }
+        }
+
+        // 参数下发
+        async function saveParams() {
+            const paramsText = document.getElementById('saveParams').value;
+            if (!paramsText.trim()) {
+                showResult('saveParamsResult', '请输入参数', true);
+                return;
+            }
+
+            let params;
+            try {
+                params = JSON.parse(paramsText);
+            } catch (e) {
+                showResult('saveParamsResult', 'JSON 格式错误: ' + e.message, true);
+                return;
+            }
+
+            showStatus('saveParamsStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/param/save', {
+                    method: 'POST',
+                    body: JSON.stringify(params)
+                });
+                showResult('saveParamsResult', result);
+                showStatus('saveParamsStatus', 'success', '成功');
+            } catch (error) {
+                showResult('saveParamsResult', error.message, true);
+                showStatus('saveParamsStatus', 'error', '失败');
+            }
+        }
+
+        // 查询未完成业务操作
+        async function getPendingBusinessLogs() {
+            showStatus('pendingStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/business-log/pending');
+                showResult('pendingResult', result);
+                showStatus('pendingStatus', 'success', '成功');
+            } catch (error) {
+                showResult('pendingResult', error.message, true);
+                showStatus('pendingStatus', 'error', '失败');
+            }
+        }
+
+        // 分页查询点位日志列表
+        async function getPointLogList() {
+            const businessId = document.getElementById('pointLogBusinessId').value;
+            if (!businessId.trim()) {
+                showResult('pointLogListResult', '请输入业务操作标识', true);
+                return;
+            }
+
+            const pageNum = document.getElementById('pointLogPageNum').value;
+            const pageSize = document.getElementById('pointLogPageSize').value;
+            const status = document.getElementById('pointLogStatusFilter').value;
+
+            // 构建查询参数
+            const params = new URLSearchParams();
+            params.append('businessId', businessId);
+            params.append('pageNum', pageNum);
+            params.append('pageSize', pageSize);
+            if (status !== '') {
+                params.append('status', status);
+            }
+
+            showStatus('pointLogListStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/business-log/point-log/list?' + params.toString());
+                showResult('pointLogListResult', result);
+                showStatus('pointLogListStatus', 'success', '成功');
+            } catch (error) {
+                showResult('pointLogListResult', error.message, true);
+                showStatus('pointLogListStatus', 'error', '失败');
+            }
+        }
+
+        // 分页查询业务日志列表
+        async function getBusinessLogList() {
+            const pageNum = document.getElementById('pageNum').value;
+            const pageSize = document.getElementById('pageSize').value;
+            const completed = document.getElementById('completedFilter').value;
+            const overallStatus = document.getElementById('overallStatusFilter').value;
+
+            // 构建查询参数
+            const params = new URLSearchParams();
+            params.append('pageNum', pageNum);
+            params.append('pageSize', pageSize);
+            if (completed !== '') {
+                params.append('completed', completed);
+            }
+            if (overallStatus !== '') {
+                params.append('overallStatus', overallStatus);
+            }
+
+            showStatus('listStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/business-log/list?' + params.toString());
+                showResult('listResult', result);
+                showStatus('listStatus', 'success', '成功');
+            } catch (error) {
+                showResult('listResult', error.message, true);
+                showStatus('listStatus', 'error', '失败');
+            }
+        }
+
+        // 登录
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showResult('loginResult', '请输入用户名和密码', true);
+                return;
+            }
+
+            showStatus('loginStatus', 'loading', '登录中...');
+            try {
+                const hashedPassword = md5(password);
+                const result = await request('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password: hashedPassword })
+                });
+
+                if (result.code === 200 && result.data && result.data.token) {
+                    document.getElementById('token').value = result.data.token;
+                    showResult('loginResult', {
+                        ...result,
+                        message: '登录成功，Token 已自动填入上方输入框'
+                    });
+                    showStatus('loginStatus', 'success', '成功');
+                } else {
+                    showResult('loginResult', result);
+                    showStatus('loginStatus', 'error', '失败');
+                }
+            } catch (error) {
+                showResult('loginResult', error.message, true);
+                showStatus('loginStatus', 'error', '失败');
+            }
+        }
+
+        // 填入批量获取示例
+        function fillBatchExample() {
+            document.getElementById('batchKeys').value = JSON.stringify([
+                "TEMP_001",
+                "TEMP_002",
+                "HUM_001"
+            ], null, 2);
+        }
+
+        // 填入参数下发示例
+        function fillSaveExample() {
+            document.getElementById('saveParams').value = JSON.stringify({
+                params: {
+                    "TEMP_001": 25,
+                    "TEMP_002": 30
+                }
+            }, null, 2);
+        }
+
+        // 品种切换
+        async function switchBreed() {
+            const breedCode = document.getElementById('switchBreedCode').value;
+            const breedWeightConfigId = document.getElementById('switchBreedWeightConfigId').value;
+            const autoUpdateOnBreedChange = document.getElementById('switchAutoUpdate').value;
+            const productionOrderNo = document.getElementById('switchProductionOrderNo').value;
+
+            if (!breedCode.trim()) {
+                showResult('switchBreedResult', '请输入品种代码', true);
+                return;
+            }
+
+            const params = {
+                breedCode: breedCode,
+                autoUpdateOnBreedChange: parseInt(autoUpdateOnBreedChange)
+            };
+
+            if (breedWeightConfigId) {
+                params.breedWeightConfigId = parseInt(breedWeightConfigId);
+            }
+            if (productionOrderNo.trim()) {
+                params.productionOrderNo = productionOrderNo;
+            }
+
+            showStatus('switchBreedStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/active-config/switch', {
+                    method: 'POST',
+                    body: JSON.stringify(params)
+                });
+                showResult('switchBreedResult', result);
+                showStatus('switchBreedStatus', 'success', '成功');
+            } catch (error) {
+                showResult('switchBreedResult', error.message, true);
+                showStatus('switchBreedStatus', 'error', '失败');
+            }
+        }
+
+        // 获取当前生效配置
+        async function getCurrentActiveConfig() {
+            showStatus('currentConfigStatus', 'loading', '请求中...');
+            try {
+                const result = await request('/api/active-config/current');
+                showResult('currentConfigResult', result);
+                showStatus('currentConfigStatus', 'success', '成功');
+            } catch (error) {
+                showResult('currentConfigResult', error.message, true);
+                showStatus('currentConfigStatus', 'error', '失败');
+            }
+        }
+
+        // 填入品种切换示例
+        function fillSwitchExample() {
+            document.getElementById('switchBreedCode').value = 'BROILER_001';
+            document.getElementById('switchBreedWeightConfigId').value = '1';
+            document.getElementById('switchAutoUpdate').value = '1';
+            document.getElementById('switchProductionOrderNo').value = 'PO20260520001';
+        }
+    </script>
+</body>
+</html>

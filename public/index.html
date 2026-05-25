@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swagger Lab - API 接口测试工具</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    #app { padding: 20px; }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 24px;
+    }
+    .header h1 { text-shadow: 2px 2px 4px rgba(0,0,0,0.2); font-size: 28px; }
+    .header p { opacity: 0.85; margin-top: 6px; font-size: 14px; }
+
+    /* 上传区 */
+    .upload-area {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 3px dashed #ddd;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+    .upload-area h2 { color: #333; margin-bottom: 8px; }
+    .upload-area p { color: #888; font-size: 14px; }
+    .upload-area input[type="file"] { display: none; }
+
+    /* 信息栏 */
+    .info-bar {
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+    .info-bar .title { font-weight: 700; color: #333; font-size: 16px; }
+    .info-bar .desc { color: #666; font-size: 13px; }
+    .info-bar .base-url {
+      background: #f0f0f0;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #555;
+    }
+    .info-bar .spacer { flex: 1; }
+    .info-bar .count { color: #667eea; font-weight: 600; }
+
+    /* 主布局 */
+    .main-layout {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    /* 左侧接口列表 */
+    .sidebar {
+      width: 340px;
+      flex-shrink: 0;
+      max-height: calc(100vh - 240px);
+      overflow-y: auto;
+      position: sticky;
+      top: 20px;
+    }
+    .sidebar::-webkit-scrollbar { width: 6px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+
+    .tag-group { margin-bottom: 16px; }
+    .tag-name {
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tag-name:hover { background: rgba(255,255,255,0.25); }
+    .tag-count {
+      background: rgba(255,255,255,0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .endpoint-item {
+      background: white;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .endpoint-item:hover { transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .endpoint-item.active { border-left: 4px solid #667eea; background: #f0f2ff; }
+
+    .method-badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+      min-width: 52px;
+      text-align: center;
+    }
+    .method-GET { background: #61affe; }
+    .method-POST { background: #49cc90; }
+    .method-PUT { background: #fca130; }
+    .method-DELETE { background: #f93e3e; }
+    .method-PATCH { background: #50e3c2; }
+    .method-HEAD { background: #9012fe; }
+    .method-OPTIONS { background: #0d5aa7; }
+
+    .endpoint-info { overflow: hidden; flex: 1; }
+    .endpoint-path {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .endpoint-summary {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 右侧详情面板 */
+    .detail-panel {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      padding: 24px;
+      min-height: 400px;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #667eea;
+      margin-bottom: 20px;
+    }
+    .detail-header .method-badge { font-size: 14px; padding: 6px 14px; }
+    .detail-header .path {
+      font-family: 'Monaco', 'Monospace';
+      font-size: 16px;
+      color: #333;
+      font-weight: 600;
+    }
+    .detail-header .summary { color: #666; font-size: 14px; margin-left: auto; }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin: 20px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: #667eea;
+      border-radius: 2px;
+    }
+
+    /* 认证区 */
+    .auth-section {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+    }
+    .auth-section label { font-weight: 600; color: #856404; font-size: 13px; margin-bottom: 6px; display: block; }
+    .auth-section input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    /* 参数表格 */
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+    .param-table th {
+      background: #f5f5f5;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+      border-bottom: 2px solid #eee;
+    }
+    .param-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .param-table input, .param-table textarea, .param-table select {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .param-table input:focus, .param-table textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .param-name { font-family: monospace; color: #333; font-weight: 600; }
+    .param-required { color: #f93e3e; margin-left: 4px; }
+    .param-type { color: #999; font-size: 12px; }
+    .param-desc { color: #666; font-size: 12px; }
+
+    /* 请求体 */
+    .body-editor {
+      width: 100%;
+      min-height: 160px;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      resize: vertical;
+      transition: border-color 0.3s;
+    }
+    .body-editor:focus { outline: none; border-color: #667eea; }
+
+    /* 基础URL输入 */
+    .base-url-input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .base-url-input label { font-weight: 600; color: #555; white-space: nowrap; font-size: 13px; }
+    .base-url-input input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+    .base-url-input input:focus { outline: none; border-color: #667eea; }
+
+    /* 按钮 */
+    .btn {
+      display: inline-block;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* 响应区 */
+    .response-area {
+      margin-top: 20px;
+    }
+    .response-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    .response-status.s2xx { background: #38ef7d; color: white; }
+    .response-status.s4xx { background: #fca130; color: white; }
+    .response-status.s5xx { background: #f93e3e; color: white; }
+    .response-status.error { background: #f93e3e; color: white; }
+
+    .response-body {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+      max-height: 500px;
+      overflow: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .response-time { color: #999; font-size: 12px; margin-left: 8px; }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #999;
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { color: #666; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="header">
+      <h1>Swagger Lab</h1>
+      <p>上传 Swagger 文件，自动生成 API 测试页面</p>
+    </div>
+
+    <!-- 上传区 -->
+    <div v-if="!swaggerData" class="upload-area" :class="{ dragover }"
+         @click="$refs.fileInput.click()"
+         @dragover.prevent="dragover = true"
+         @dragleave="dragover = false"
+         @drop.prevent="onDrop">
+      <h2>上传 Swagger 文件</h2>
+      <p>支持 JSON / YAML 格式，拖拽或点击上传</p>
+      <input type="file" ref="fileInput" accept=".json,.yaml,.yml" @change="onFileSelect">
+    </div>
+
+    <!-- 信息栏 -->
+    <div v-if="swaggerData" class="info-bar">
+      <span class="title">{{ swaggerData.info.title || '未命名 API' }}</span>
+      <span class="desc" v-if="swaggerData.info.version">v{{ swaggerData.info.version }}</span>
+      <span class="base-url" v-if="swaggerData.baseUrl">{{ swaggerData.baseUrl }}</span>
+      <span class="spacer"></span>
+      <span class="count">{{ endpoints.length }} 个接口</span>
+      <button class="btn btn-primary" style="padding:6px 16px; font-size:12px;" @click="reset">重新上传</button>
+    </div>
+
+    <!-- 主布局 -->
+    <div v-if="swaggerData" class="main-layout">
+      <!-- 左侧接口列表 -->
+      <div class="sidebar">
+        <div class="tag-group" v-for="(eps, tag) in groupedEndpoints" :key="tag">
+          <div class="tag-name" @click="toggleTag(tag)">
+            {{ tag }}
+            <span class="tag-count">{{ eps.length }}</span>
+          </div>
+          <div v-show="collapsedTags[tag] !== true">
+            <div class="endpoint-item" v-for="(ep, i) in eps" :key="i"
+                 :class="{ active: selectedEndpoint === ep }"
+                 @click="selectEndpoint(ep)">
+              <span class="method-badge" :class="'method-' + ep.method">{{ ep.method }}</span>
+              <div class="endpoint-info">
+                <div class="endpoint-path">{{ ep.path }}</div>
+                <div class="endpoint-summary" v-if="ep.summary">{{ ep.summary }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧详情面板 -->
+      <div class="detail-panel">
+        <template v-if="selectedEndpoint">
+          <div class="detail-header">
+            <span class="method-badge" :class="'method-' + selectedEndpoint.method">{{ selectedEndpoint.method }}</span>
+            <span class="path">{{ selectedEndpoint.path }}</span>
+            <span class="summary" v-if="selectedEndpoint.summary">{{ selectedEndpoint.summary }}</span>
+          </div>
+
+          <!-- 目标 URL -->
+          <div class="base-url-input">
+            <label>目标地址</label>
+            <input v-model="baseUrl" placeholder="如 http://localhost:8080">
+          </div>
+
+          <!-- 认证 -->
+          <div class="auth-section">
+            <label>Authorization</label>
+            <input v-model="token" placeholder="Bearer Token（可选）">
+          </div>
+
+          <!-- 路径参数 -->
+          <template v-if="pathParams.length">
+            <div class="section-title">路径参数</div>
+            <table class="param-table">
+              <tr><th>参数名</th><th>类型</th><th>说明</th><th>值</th></tr>
+              <tr v-for="p in pathParams" :key="p.name">
+                <td><span class="param-name">{{ p.name }}<span v-if="p.required" class="param-required">*</span></span></td>
+                <td><span class="param-type">{{ p.type || p.schema?.type || '-' }}</span></td>
+                <td><span class="param-desc">{{ p.description || '' }}</span></td>
+                <td><input v-model="paramValues[p.name]" :placeholder="p.required ? '必填' : '可选'"></td>
+              </tr>
+            </table>
+          </template>
+
+          <!-- 查询参数 -->
+          <template v-if="queryParams.length">
+            <div class="section-title">查询参数</div>
+            <table class="param-table">
+              <tr><th>参数名</th><th>类型</th><th>说明</th><th>值</th></tr>
+              <tr v-for="p in queryParams" :key="p.name">
+                <td><span class="param-name">{{ p.name }}<span v-if="p.required" class="param-required">*</span></span></td>
+                <td><span class="param-type">{{ p.type || p.schema?.type || '-' }}</span></td>
+                <td><span class="param-desc">{{ p.description || '' }}</span></td>
+                <td><input v-model="paramValues[p.name]" :placeholder="p.required ? '必填' : '可选'"></td>
+              </tr>
+            </table>
+          </template>
+
+          <!-- 请求头参数 -->
+          <template v-if="headerParams.length">
+            <div class="section-title">请求头</div>
+            <table class="param-table">
+              <tr><th>参数名</th><th>说明</th><th>值</th></tr>
+              <tr v-for="p in headerParams" :key="p.name">
+                <td><span class="param-name">{{ p.name }}<span v-if="p.required" class="param-required">*</span></span></td>
+                <td><span class="param-desc">{{ p.description || '' }}</span></td>
+                <td><input v-model="paramValues['_header_' + p.name]" :placeholder="p.required ? '必填' : '可选'"></td>
+              </tr>
+            </table>
+          </template>
+
+          <!-- 请求体 -->
+          <template v-if="hasBody">
+            <div class="section-title">请求体 (JSON)</div>
+            <textarea class="body-editor" v-model="requestBody" placeholder='{"key": "value"}'></textarea>
+          </template>
+
+          <!-- 发送按钮 -->
+          <div style="margin-top: 20px;">
+            <button class="btn btn-primary" :disabled="loading" @click="sendRequest">
+              {{ loading ? '请求中...' : '发送请求' }}
+            </button>
+          </div>
+
+          <!-- 响应 -->
+          <div class="response-area" v-if="response">
+            <div class="section-title">响应</div>
+            <span class="response-status" :class="statusClass">{{ response.status }} {{ response.statusText }}</span>
+            <span class="response-time">{{ response.time }}ms</span>
+            <div class="response-body">{{ formatResponse(response.data) }}</div>
+          </div>
+        </template>
+
+        <div v-else class="empty-state">
+          <div class="icon">&larr;</div>
+          <h3>选择一个接口开始测试</h3>
+          <p>从左侧列表中点击一个接口</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, reactive } = Vue;
+
+    createApp({
+      setup() {
+        const dragover = ref(false);
+        const swaggerData = ref(null);
+        const endpoints = ref([]);
+        const selectedEndpoint = ref(null);
+        const baseUrl = ref('');
+        const token = ref('');
+        const paramValues = reactive({});
+        const requestBody = ref('');
+        const loading = ref(false);
+        const response = ref(null);
+        const collapsedTags = reactive({});
+
+        const groupedEndpoints = computed(() => {
+          const groups = {};
+          for (const ep of endpoints.value) {
+            const tag = ep.tag || 'default';
+            if (!groups[tag]) groups[tag] = [];
+            groups[tag].push(ep);
+          }
+          return groups;
+        });
+
+        const pathParams = computed(() => {
+          if (!selectedEndpoint.value) return [];
+          return (selectedEndpoint.value.parameters || []).filter(p => p.in === 'path');
+        });
+
+        const queryParams = computed(() => {
+          if (!selectedEndpoint.value) return [];
+          return (selectedEndpoint.value.parameters || []).filter(p => p.in === 'query');
+        });
+
+        const headerParams = computed(() => {
+          if (!selectedEndpoint.value) return [];
+          return (selectedEndpoint.value.parameters || []).filter(p => p.in === 'header');
+        });
+
+        const hasBody = computed(() => {
+          if (!selectedEndpoint.value) return false;
+          const method = selectedEndpoint.value.method;
+          return ['POST', 'PUT', 'PATCH'].includes(method) || selectedEndpoint.value.requestBody;
+        });
+
+        const statusClass = computed(() => {
+          if (!response.value) return '';
+          const s = response.value.status;
+          if (s >= 200 && s < 300) return 's2xx';
+          if (s >= 400 && s < 500) return 's4xx';
+          return 's5xx';
+        });
+
+        function toggleTag(tag) {
+          collapsedTags[tag] = !collapsedTags[tag];
+        }
+
+        async function uploadFile(file) {
+          const formData = new FormData();
+          formData.append('file', file);
+          try {
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
+            swaggerData.value = data;
+            endpoints.value = data.endpoints;
+            baseUrl.value = data.baseUrl || '';
+          } catch (err) {
+            alert('上传失败: ' + err.message);
+          }
+        }
+
+        function onFileSelect(e) {
+          const file = e.target.files[0];
+          if (file) uploadFile(file);
+        }
+
+        function onDrop(e) {
+          dragover.value = false;
+          const file = e.dataTransfer.files[0];
+          if (file) uploadFile(file);
+        }
+
+        function selectEndpoint(ep) {
+          selectedEndpoint.value = ep;
+          response.value = null;
+          // 清空参数值
+          Object.keys(paramValues).forEach(k => delete paramValues[k]);
+          requestBody.value = '';
+
+          // 预填请求体示例
+          if (ep.requestBody) {
+            const content = ep.requestBody.content;
+            if (content && content['application/json'] && content['application/json'].schema) {
+              const schema = content['application/json'].schema;
+              requestBody.value = JSON.stringify(generateExample(schema), null, 2);
+            }
+          }
+        }
+
+        function generateExample(schema) {
+          if (!schema) return {};
+          if (schema.example !== undefined) return schema.example;
+          if (schema.default !== undefined) return schema.default;
+          if (schema.type === 'object' || schema.properties) {
+            const obj = {};
+            for (const [key, prop] of Object.entries(schema.properties || {})) {
+              obj[key] = generateExample(prop);
+            }
+            return obj;
+          }
+          if (schema.type === 'array') {
+            return [generateExample(schema.items || {})];
+          }
+          if (schema.type === 'string') return '';
+          if (schema.type === 'integer' || schema.type === 'number') return 0;
+          if (schema.type === 'boolean') return false;
+          return {};
+        }
+
+        async function sendRequest() {
+          if (!selectedEndpoint.value || !baseUrl.value) {
+            alert('请填写目标地址');
+            return;
+          }
+
+          loading.value = true;
+          response.value = null;
+
+          const ep = selectedEndpoint.value;
+          let url = baseUrl.value.replace(/\/$/, '') + ep.path;
+
+          // 替换路径参数
+          for (const p of pathParams.value) {
+            const val = paramValues[p.name] || '';
+            url = url.replace('{' + p.name + '}', encodeURIComponent(val));
+          }
+
+          // 添加查询参数
+          const searchParams = new URLSearchParams();
+          for (const p of queryParams.value) {
+            const val = paramValues[p.name];
+            if (val !== undefined && val !== '') {
+              searchParams.append(p.name, val);
+            }
+          }
+          const qs = searchParams.toString();
+          if (qs) url += '?' + qs;
+
+          // 请求头
+          const headers = {};
+          if (token.value) {
+            headers['Authorization'] = token.value.startsWith('Bearer ')
+              ? token.value
+              : 'Bearer ' + token.value;
+          }
+          for (const p of headerParams.value) {
+            const val = paramValues['_header_' + p.name];
+            if (val) headers[p.name] = val;
+          }
+
+          // 请求体
+          let body = null;
+          if (hasBody.value && requestBody.value.trim()) {
+            try {
+              body = JSON.parse(requestBody.value);
+            } catch {
+              body = requestBody.value;
+            }
+          }
+
+          const startTime = Date.now();
+          try {
+            const res = await fetch('/api/proxy', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ method: ep.method, url, headers, body })
+            });
+            const data = await res.json();
+            response.value = {
+              status: data.status || 0,
+              statusText: data.statusText || '',
+              data: data.data || data.error,
+              time: Date.now() - startTime
+            };
+          } catch (err) {
+            response.value = {
+              status: 0,
+              statusText: 'Error',
+              data: err.message,
+              time: Date.now() - startTime
+            };
+          }
+          loading.value = false;
+        }
+
+        function formatResponse(data) {
+          if (typeof data === 'string') return data;
+          try { return JSON.stringify(data, null, 2); }
+          catch { return String(data); }
+        }
+
+        function reset() {
+          swaggerData.value = null;
+          endpoints.value = [];
+          selectedEndpoint.value = null;
+          response.value = null;
+          baseUrl.value = '';
+          token.value = '';
+          Object.keys(paramValues).forEach(k => delete paramValues[k]);
+        }
+
+        return {
+          dragover, swaggerData, endpoints, selectedEndpoint, baseUrl, token,
+          paramValues, requestBody, loading, response, collapsedTags,
+          groupedEndpoints, pathParams, queryParams, headerParams, hasBody, statusClass,
+          toggleTag, onFileSelect, onDrop, selectEndpoint, sendRequest,
+          formatResponse, reset
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
