@@ -1,0 +1,92 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "宠物商店 Mock API",
+    "description": "Swagger Lab 本地 Mock 接口，上传后即可直接调用",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3210",
+  "basePath": "",
+  "schemes": ["http"],
+  "paths": {
+    "/mock/pets": {
+      "get": {
+        "tags": ["宠物管理"],
+        "summary": "获取宠物列表",
+        "parameters": [
+          { "name": "name", "in": "query", "type": "string", "description": "按名称模糊筛选", "example": "小" },
+          { "name": "status", "in": "query", "type": "string", "description": "状态筛选", "enum": ["available", "pending", "sold"], "example": "available" },
+          { "name": "limit", "in": "query", "type": "integer", "description": "返回数量限制", "example": 10 }
+        ]
+      },
+      "post": {
+        "tags": ["宠物管理"],
+        "summary": "新增宠物",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "example": {
+                "name": "小花",
+                "category": "猫",
+                "status": "available",
+                "price": 158,
+                "tags": ["可爱", "短毛"]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/mock/pets/{id}": {
+      "get": {
+        "tags": ["宠物管理"],
+        "summary": "根据 ID 获取宠物详情",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "integer", "description": "宠物 ID", "example": 1 }
+        ]
+      },
+      "put": {
+        "tags": ["宠物管理"],
+        "summary": "更新宠物信息",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "integer", "description": "宠物 ID", "example": 1 },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "example": {
+                "name": "大黄",
+                "status": "sold",
+                "price": 399
+              }
+            }
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["宠物管理"],
+        "summary": "删除宠物",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "integer", "description": "宠物 ID", "example": 3 }
+        ]
+      }
+    },
+    "/mock/header-test": {
+      "get": {
+        "tags": ["调试工具"],
+        "summary": "自定义请求头测试",
+        "description": "返回服务端收到的自定义 Header，用于验证 Header 透传",
+        "parameters": [
+          { "name": "X-Request-Id", "in": "header", "type": "string", "description": "请求追踪 ID", "example": "req-001" },
+          { "name": "X-Tenant-Code", "in": "header", "type": "string", "description": "租户编码", "example": "shop-001" }
+        ]
+      }
+    }
+  }
+}
