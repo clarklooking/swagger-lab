@@ -4,6 +4,12 @@
 
 上传 Swagger/OpenAPI 文件，自动生成可交互的 API 测试页面。
 
+## 截图
+
+| 首页（上传前） | 使用页（上传后） |
+|---|---|
+| ![首页](img/swagger-lab_index.png) | ![使用页](img/swagger-lab_dash.png) |
+
 ## 功能特性
 
 - 支持 Swagger 2.0 和 OpenAPI 3.0（JSON / YAML 格式）

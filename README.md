@@ -4,6 +4,12 @@
 
 Upload a Swagger/OpenAPI file and instantly get an interactive API testing page.
 
+## Screenshots
+
+| Index Page | Dashboard |
+|---|---|
+| ![Index](img/swagger-lab_index.png) | ![Dashboard](img/swagger-lab_dash.png) |
+
 ## Features
 
 - Supports Swagger 2.0 and OpenAPI 3.0 (JSON / YAML)
